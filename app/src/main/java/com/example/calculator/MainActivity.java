@@ -1,11 +1,17 @@
 package com.example.calculator;
 
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import org.mariuszgromada.math.mxparser.Expression;
 
@@ -14,13 +20,23 @@ import javax.xml.xpath.XPathExpressionException;
 public class MainActivity extends AppCompatActivity {
 
     private EditText display_text;
+    private TextView txtPrevious;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        ActionBar actionBar = getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        ColorDrawable colorDrawable = new ColorDrawable(Color.parseColor("#232F34"));
+        actionBar.setBackgroundDrawable(colorDrawable);
+
+        if(getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            getSupportActionBar().hide();
+        }
         display_text = findViewById(R.id.display_text);
         display_text.setShowSoftInputOnFocus(false);
+        txtPrevious = findViewById(R.id.txtprevious);
 
         display_text.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -32,7 +48,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private boolean checkTrig(String stringToAdd) {
+        if(stringToAdd=="Sin(" || stringToAdd=="Cos(" || stringToAdd=="Tan(" || stringToAdd=="Log(") {
+            return true;
+        }
+        return false;
+    }
+    private boolean checkNotOperator(char ch) {
+        if(ch=='+' || ch=='-' || ch=='*' || ch=='÷') {
+            return false;
+        }
+        return true;
+    }
     private void updateText(String stringToAdd) {
+        if(checkTrig(stringToAdd)) {
+            display_text.setText("");
+        }
+
         // Getting the expression at the Edit text.
         String oldString = display_text.getText().toString();
         //Getting the cursor position to add the newString after that.
@@ -57,11 +89,15 @@ public class MainActivity extends AppCompatActivity {
         String expression = display_text.getText().toString();
         expression = expression.replaceAll("÷", "/");
         expression = expression.replaceAll("x", "*");
-        expression = expression.replaceAll("Sin\\(", "sin((180*22)/7");
-        expression = expression.replaceAll("Cos\\(", "cos(toRadians(");
-        expression = expression.replaceAll("Tan\\(", "tan(toRadians(");
+        expression = expression.replaceAll("Sin\\(", "sin(22/(7*180)");
+        expression = expression.replaceAll("Cos\\(", "cos(22/(7*180)");
+        expression = expression.replaceAll("Tan\\(", "tan(22/(7*180)");
+        expression = expression.replaceAll("Log\\(", "ln(");
 
-//        expression = expression.replaceAll("Log(", "log(");
+        String prevAns = display_text.getText().toString();
+        if(prevAns != getString(R.string.show)) {
+            txtPrevious.setText(prevAns);
+        }
 
         Expression exp = new Expression(expression);
         String result = String.valueOf(exp.calculate());
@@ -77,8 +113,8 @@ public class MainActivity extends AppCompatActivity {
             SpannableStringBuilder spannableStringBuilder = (SpannableStringBuilder) display_text.getText();
             spannableStringBuilder.replace(cursorPosition-1, cursorPosition, "");
             display_text.setText(spannableStringBuilder);
-            display_text.setText(cursorPosition-1);
-
+//            display_text.setText(cursorPosition-1);
+            display_text.setSelection(cursorPosition - 1);
         }
     }
     public void bClear(View view) {
